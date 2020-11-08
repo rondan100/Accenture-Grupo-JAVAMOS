@@ -29,7 +29,7 @@ Integrantes:
 	🚧  Java Select 🚀 Em construção...  🚧
 </h4>
 
-- **[Getting started](#itens-json)**
+- **[Getting started](#getting-started)**
 - **[Documentation](https://documenter.getpostman.com/view/10647633/TVYGcy7r)**
 
 Quais ferramentas estamos usando?
