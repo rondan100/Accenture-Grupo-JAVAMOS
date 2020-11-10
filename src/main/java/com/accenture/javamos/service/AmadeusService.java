@@ -1,21 +1,23 @@
 package com.accenture.javamos.service;
 
 import com.accenture.javamos.configuration.AmadeusConfig;
-import com.accenture.javamos.repository.AmadeusRepository;
+import com.accenture.javamos.model.FlightOfferSearchRequest;
 import com.amadeus.Amadeus;
 import com.amadeus.Params;
 import com.amadeus.exceptions.ResponseException;
-import com.amadeus.resources.Airline;
 import com.amadeus.resources.FlightOfferSearch;
+import com.amadeus.resources.FlightOrder;
+import com.amadeus.resources.FlightPrice;
+import com.amadeus.resources.Traveler;
+import com.google.gson.JsonObject;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AmadeusService {
-  private Amadeus amadeus;
 
-  @Autowired
-  private AmadeusRepository amadeusRepository;
+  private Amadeus amadeus;
 
   @Autowired
   public AmadeusService(@Autowired AmadeusConfig amadeusConfig) {
@@ -24,33 +26,17 @@ public class AmadeusService {
     this.amadeus = Amadeus.builder(clientId, clientSecret).build();
   }
 
-  public Airline[] getAirlines() {
-    try {
-      if (this.amadeusRepository.getAirlines() == null) {
-        this.amadeusRepository.setAirlines(
-            this.amadeus.referenceData.airlines.get()
-          );
-      }
-    } catch (ResponseException e) {
-      e.printStackTrace();
-    }
-
-    return this.amadeusRepository.getAirlines();
-  }
-
   public FlightOfferSearch[] getFlightOfferSearches(
-    String fromIataCode,
-    String toIataCode,
-    String departureDate,
-    Integer adults
+    FlightOfferSearchRequest search
   ) {
     try {
       return amadeus.shopping.flightOffersSearch.get(
         Params
-          .with("originLocationCode", fromIataCode)
-          .and("destinationLocationCode", toIataCode)
-          .and("departureDate", departureDate)
-          .and("adults", adults)
+          .with("originLocationCode", search.getFrom())
+          .and("destinationLocationCode", search.getTo())
+          .and("departureDate", search.getDeparture())
+          .and("adults", search.getAdults())
+          .and("currencyCode", "BRL")
       );
     } catch (ResponseException e) {
       e.printStackTrace();
@@ -74,6 +60,34 @@ public class AmadeusService {
           .and("returnDate", returnDate)
           .and("adults", adults)
       );
+    } catch (ResponseException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public FlightPrice getFlightPrice(FlightOfferSearch search) {
+    try {
+      return amadeus.shopping.flightOffersSearch.pricing.post(search);
+    } catch (ResponseException e) {
+      e.printStackTrace();
+    }
+
+    return null;
+  }
+
+  public FlightOrder createOrder(FlightPrice price, Traveler[] travelers) {
+    try {
+      return amadeus.booking.flightOrders.post(price, travelers);
+    } catch (ResponseException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public FlightOrder createOrder(JsonObject body) {
+    try {
+      return amadeus.booking.flightOrders.post(body);
     } catch (ResponseException e) {
       e.printStackTrace();
     }
